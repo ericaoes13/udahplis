@@ -9,9 +9,13 @@ def load_data(uploaded_file):
     return None
 
 # Fungsi untuk rekonsiliasi berdasarkan kriteria
-def reconcile(bank_data, invoice_data, selected_invoice_date):
+def reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_date):
     # Filter bank data berdasarkan remark yang mengandung "KLIK Indomaret"
     bank_data_filtered = bank_data[bank_data['Remark'].str.contains('KLIK Indomaret', na=False)]
+    
+    # Filter berdasarkan rentang tanggal (start date dan end date)
+    bank_data_filtered = bank_data_filtered[(bank_data_filtered['Posting Date'] >= start_date) &
+                                             (bank_data_filtered['Posting Date'] <= end_date)]
     
     # Filter berdasarkan tanggal invoice yang dipilih
     invoice_data_filtered = invoice_data[invoice_data['TANGGAL INVOICE'] == selected_invoice_date]
@@ -43,6 +47,11 @@ uploaded_invoice_file = st.sidebar.file_uploader("Unggah File Invoice", type=["x
 st.sidebar.header("Unggah File Rekening Koran")
 uploaded_bank_file = st.sidebar.file_uploader("Unggah File Rekening Koran", type=["xlsx", "csv"])
 
+# Pilih start date dan end date
+st.sidebar.subheader("Pilih Rentang Tanggal")
+start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2025-04-08"))
+end_date = st.sidebar.date_input("End Date", pd.to_datetime("2025-04-13"))
+
 # Memuat data
 if uploaded_invoice_file and uploaded_bank_file:
     # Memuat data dari file yang diunggah
@@ -62,7 +71,7 @@ if uploaded_invoice_file and uploaded_bank_file:
     
     # Lakukan rekonsiliasi jika tombol ditekan
     if st.button("Rekonsiliasi"):
-        result_table, total_invoice_per_day = reconcile(bank_data, invoice_data, selected_invoice_date)
+        result_table, total_invoice_per_day = reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_date)
 
         # Tampilkan hasil rekonsiliasi
         st.subheader(f"Rekonsiliasi untuk Tanggal Invoice {selected_invoice_date}")
