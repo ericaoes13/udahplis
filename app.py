@@ -37,6 +37,16 @@ if invoice_file and bank_statement_file:
     invoice_data = pd.read_excel(invoice_path)
     bank_statement_data = pd.read_excel(bank_statement_path)
 
+    # Konversi kolom 'TANGGAL INVOICE' menjadi datetime
+    invoice_data['TANGGAL INVOICE'] = pd.to_datetime(invoice_data['TANGGAL INVOICE'], errors='coerce')
+
+    # Konversi kolom 'Posting Date' menjadi datetime
+    bank_statement_data['Posting Date'] = pd.to_datetime(bank_statement_data['Posting Date'], errors='coerce')
+
+    # Lakukan pengecekan jika ada nilai NaT (Not a Time) pada 'Posting Date'
+    if bank_statement_data['Posting Date'].isna().sum() > 0:
+        st.warning("Ada nilai yang tidak valid pada kolom 'Posting Date'. Beberapa data mungkin diabaikan.")
+
     # Tampilkan data Invoice dan Rekening Koran
     st.subheader("Data Invoice")
     st.write(invoice_data)
@@ -44,20 +54,22 @@ if invoice_file and bank_statement_file:
     st.subheader("Data Rekening Koran")
     st.write(bank_statement_data)
 
-    # Fitur Filter Tanggal
+    # Fitur Filter Tanggal untuk Invoice
     st.subheader("Filter Berdasarkan Tanggal")
     start_date_invoice = st.date_input("Tanggal Mulai Invoice", pd.to_datetime(invoice_data['TANGGAL INVOICE'].min()))
     end_date_invoice = st.date_input("Tanggal Akhir Invoice", pd.to_datetime(invoice_data['TANGGAL INVOICE'].max()))
 
-    start_date_bank = st.date_input("Tanggal Mulai Rekening Koran", pd.to_datetime(bank_statement_data['Posting Date'].min()))
-    end_date_bank = st.date_input("Tanggal Akhir Rekening Koran", pd.to_datetime(bank_statement_data['Posting Date'].max()))
+    # Fitur Filter Tanggal untuk Rekening Koran
+    start_date_bank = st.date_input("Tanggal Mulai Rekening Koran", bank_statement_data['Posting Date'].min())
+    end_date_bank = st.date_input("Tanggal Akhir Rekening Koran", bank_statement_data['Posting Date'].max())
 
-    # Filter data berdasarkan tanggal
+    # Filter data berdasarkan tanggal untuk Invoice
     filtered_invoice_data = invoice_data[
         (invoice_data['TANGGAL INVOICE'] >= start_date_invoice) & 
         (invoice_data['TANGGAL INVOICE'] <= end_date_invoice)
     ]
 
+    # Filter data berdasarkan tanggal untuk Rekening Koran
     filtered_bank_statement_data = bank_statement_data[
         (bank_statement_data['Posting Date'] >= start_date_bank) & 
         (bank_statement_data['Posting Date'] <= end_date_bank)
