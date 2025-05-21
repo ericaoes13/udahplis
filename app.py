@@ -92,6 +92,10 @@ if invoice_file and bank_statement_file:
     reconciled_data = reconciled_data[['Posting Date', 'Remark', 'Credit', 'TANGGAL INVOICE', 'HARGA']]
     reconciled_data.columns = ['Posting Date', 'Remark', 'Credit', 'Invoice Date', 'Invoice']
 
+    # Tampilkan rentang tanggal invoice yang dipilih
+    invoice_date_range = f"Rentang Tanggal Invoice: {start_date_invoice.date()} hingga {end_date_invoice.date()}"
+    st.write(invoice_date_range)
+
     st.write(reconciled_data)
 
 else:
