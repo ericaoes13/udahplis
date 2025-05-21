@@ -10,8 +10,8 @@ def load_data(uploaded_file):
 
 # Fungsi untuk rekonsiliasi berdasarkan kriteria
 def reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_date):
-    # Filter bank data berdasarkan remark yang mengandung "KLIK Indomaret"
-    bank_data_filtered = bank_data[bank_data['Remark'].str.contains('KLIK Indomaret', na=False)]
+    # Filter bank data berdasarkan remark yang mengandung "KLIK INDOMARET SUKSES PT"
+    bank_data_filtered = bank_data[bank_data['Remark'].str.contains('KLIK INDOMARET SUKSES PT', na=False)]
     
     # Filter berdasarkan rentang tanggal (start date dan end date)
     bank_data_filtered = bank_data_filtered[(bank_data_filtered['Posting Date'] >= start_date) &
