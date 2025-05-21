@@ -9,32 +9,25 @@ def load_data(uploaded_file):
     return None
 
 # Fungsi untuk rekonsiliasi berdasarkan kriteria
-def reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_date):
-    # Filter bank data berdasarkan remark yang mengandung "KLIK Indomaret"
-    bank_data_filtered = bank_data[bank_data['Remark'].str.contains('KLIK Indomaret', na=False)]
+def reconcile(bank_data, invoice_data, start_date_invoice, end_date_invoice, start_date_bank, end_date_bank):
+    # Filter invoice data berdasarkan rentang tanggal invoice (start date dan end date)
+    invoice_data_filtered = invoice_data[(invoice_data['TANGGAL INVOICE'] >= start_date_invoice) & 
+                                         (invoice_data['TANGGAL INVOICE'] <= end_date_invoice)]
     
-    # Filter berdasarkan rentang tanggal (start date dan end date)
-    bank_data_filtered = bank_data_filtered[(bank_data_filtered['Posting Date'] >= start_date) &
-                                             (bank_data_filtered['Posting Date'] <= end_date)]
-    
-    # Filter berdasarkan tanggal invoice yang dipilih
-    invoice_data_filtered = invoice_data[invoice_data['TANGGAL INVOICE'] == selected_invoice_date]
+    # Filter bank data berdasarkan rentang tanggal rekening koran (start date dan end date)
+    bank_data_filtered = bank_data[(bank_data['Posting Date'] >= start_date_bank) & 
+                                    (bank_data['Posting Date'] <= end_date_bank)]
     
     # Hitung total nominal invoice per tanggal
     total_invoice_per_day = invoice_data_filtered['HARGA'].sum()
 
-    # Convert Tanggal Posting to datetime
-    bank_data_filtered['Posting Date'] = pd.to_datetime(bank_data_filtered['Posting Date'], errors='coerce')
-
-    # Filter data rekening koran yang tanggalnya sesuai dengan tanggal invoice yang dipilih
-    bank_data_filtered = bank_data_filtered[bank_data_filtered['Posting Date'] == selected_invoice_date]
-    
     # Siapkan hasil tabel
     result_table = bank_data_filtered[['Posting Date', 'Remark', 'Credit']].copy()
-    result_table['Invoice'] = total_invoice_per_day  # Menambahkan total invoice
+    result_table['Invoice Date'] = invoice_data_filtered['TANGGAL INVOICE'].values
+    result_table['Invoice'] = invoice_data_filtered['HARGA'].values  # Menambahkan Harga
 
     # Return hasil
-    return result_table, total_invoice_per_day
+    return result_table, total_invoice_per_day, invoice_data_filtered[['TANGGAL INVOICE', 'HARGA']]
 
 # Antarmuka Streamlit
 st.title("Aplikasi Rekonsiliasi Data Rekening Koran dan Invoice")
@@ -47,10 +40,15 @@ uploaded_invoice_file = st.sidebar.file_uploader("Unggah File Invoice", type=["x
 st.sidebar.header("Unggah File Rekening Koran")
 uploaded_bank_file = st.sidebar.file_uploader("Unggah File Rekening Koran", type=["xlsx", "csv"])
 
-# Pilih start date dan end date
-st.sidebar.subheader("Pilih Rentang Tanggal")
-start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2025-04-08"))
-end_date = st.sidebar.date_input("End Date", pd.to_datetime("2025-04-13"))
+# Pilih rentang tanggal untuk Invoice
+st.sidebar.subheader("Pilih Rentang Tanggal Invoice")
+start_date_invoice = st.sidebar.date_input("Start Date Invoice", pd.to_datetime("2025-04-08"))
+end_date_invoice = st.sidebar.date_input("End Date Invoice", pd.to_datetime("2025-04-13"))
+
+# Pilih rentang tanggal untuk Rekening Koran
+st.sidebar.subheader("Pilih Rentang Tanggal Rekening Koran")
+start_date_bank = st.sidebar.date_input("Start Date Rekening Koran", pd.to_datetime("2025-04-08"))
+end_date_bank = st.sidebar.date_input("End Date Rekening Koran", pd.to_datetime("2025-04-13"))
 
 # Memuat data
 if uploaded_invoice_file and uploaded_bank_file:
@@ -58,27 +56,28 @@ if uploaded_invoice_file and uploaded_bank_file:
     bank_data = load_data(uploaded_bank_file)
     invoice_data = load_data(uploaded_invoice_file)
     
+    # Pastikan kolom TANGGAL INVOICE diformat sebagai datetime
+    invoice_data['TANGGAL INVOICE'] = pd.to_datetime(invoice_data['TANGGAL INVOICE'], errors='coerce')
+
     # Tampilkan data mentah
     st.subheader("Data Rekening Koran")
-    st.write(bank_data.head())
+    st.write(bank_data)
     
     st.subheader("Data Invoice")
-    st.write(invoice_data.head())
+    # Tampilkan seluruh data Invoice yang sudah difilter berdasarkan rentang tanggal
+    st.write(invoice_data[['TANGGAL INVOICE', 'HARGA']])
 
-    # Pilih tanggal invoice untuk rekonsiliasi
-    st.sidebar.subheader("Pilih Tanggal Invoice")
-    selected_invoice_date = st.sidebar.date_input("Tanggal Invoice", invoice_data['TANGGAL INVOICE'].min())
-    
     # Lakukan rekonsiliasi jika tombol ditekan
     if st.button("Rekonsiliasi"):
-        result_table, total_invoice_per_day = reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_date)
+        result_table, total_invoice_per_day, invoice_data_filtered = reconcile(
+            bank_data, invoice_data, start_date_invoice, end_date_invoice, start_date_bank, end_date_bank)
 
         # Tampilkan hasil rekonsiliasi
-        st.subheader(f"Rekonsiliasi untuk Tanggal Invoice {selected_invoice_date}")
+        st.subheader(f"Rekonsiliasi untuk Rentang Tanggal Invoice {start_date_invoice} - {end_date_invoice}")
         st.write(result_table)
 
         # Tampilkan total nominal invoice per hari
-        st.subheader(f"Total Nominal Invoice pada Tanggal {selected_invoice_date}")
+        st.subheader(f"Total Nominal Invoice pada Rentang Tanggal {start_date_invoice} - {end_date_invoice}")
         st.write(total_invoice_per_day)
 
         # Opsi untuk mengunduh hasil
