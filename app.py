@@ -13,12 +13,9 @@ def reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_da
     # Filter bank data berdasarkan remark yang mengandung "KLIK INDOMARET SUKSES PT"
     bank_data_filtered = bank_data[bank_data['Remark'].str.contains('KLIK INDOMARET SUKSES PT', na=False)]
     
-    # Filter berdasarkan rentang tanggal (start date dan end date)
-    bank_data_filtered = bank_data_filtered[(bank_data_filtered['Posting Date'] >= start_date) &
-                                             (bank_data_filtered['Posting Date'] <= end_date)]
-    
-    # Filter berdasarkan tanggal invoice yang dipilih
-    invoice_data_filtered = invoice_data[invoice_data['TANGGAL INVOICE'] == selected_invoice_date]
+    # Filter berdasarkan rentang tanggal invoice (start date dan end date)
+    invoice_data_filtered = invoice_data[(invoice_data['TANGGAL INVOICE'] >= start_date) & 
+                                         (invoice_data['TANGGAL INVOICE'] <= end_date)]
     
     # Hitung total nominal invoice per tanggal
     total_invoice_per_day = invoice_data_filtered['HARGA'].sum()
@@ -47,8 +44,8 @@ uploaded_invoice_file = st.sidebar.file_uploader("Unggah File Invoice", type=["x
 st.sidebar.header("Unggah File Rekening Koran")
 uploaded_bank_file = st.sidebar.file_uploader("Unggah File Rekening Koran", type=["xlsx", "csv"])
 
-# Pilih start date dan end date
-st.sidebar.subheader("Pilih Rentang Tanggal")
+# Pilih rentang tanggal untuk Invoice
+st.sidebar.subheader("Pilih Rentang Tanggal Invoice")
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2025-04-08"))
 end_date = st.sidebar.date_input("End Date", pd.to_datetime("2025-04-13"))
 
