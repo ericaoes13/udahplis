@@ -9,7 +9,7 @@ def load_data(uploaded_file):
     return None
 
 # Fungsi untuk rekonsiliasi berdasarkan kriteria
-def reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_date):
+def reconcile(bank_data, invoice_data, start_date, end_date):
     # Filter bank data berdasarkan remark yang mengandung "KLIK INDOMARET SUKSES PT"
     bank_data_filtered = bank_data[bank_data['Remark'].str.contains('KLIK INDOMARET SUKSES PT', na=False)]
     
@@ -23,8 +23,9 @@ def reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_da
     # Convert Tanggal Posting to datetime
     bank_data_filtered['Posting Date'] = pd.to_datetime(bank_data_filtered['Posting Date'], errors='coerce')
 
-    # Filter data rekening koran yang tanggalnya sesuai dengan tanggal invoice yang dipilih
-    bank_data_filtered = bank_data_filtered[bank_data_filtered['Posting Date'] == selected_invoice_date]
+    # Filter data rekening koran yang tanggalnya sesuai dengan rentang tanggal invoice yang dipilih
+    bank_data_filtered = bank_data_filtered[(bank_data_filtered['Posting Date'] >= start_date) & 
+                                            (bank_data_filtered['Posting Date'] <= end_date)]
     
     # Siapkan hasil tabel
     result_table = bank_data_filtered[['Posting Date', 'Remark', 'Credit']].copy()
@@ -62,20 +63,16 @@ if uploaded_invoice_file and uploaded_bank_file:
     st.subheader("Data Invoice")
     st.write(invoice_data.head())
 
-    # Pilih tanggal invoice untuk rekonsiliasi
-    st.sidebar.subheader("Pilih Tanggal Invoice")
-    selected_invoice_date = st.sidebar.date_input("Tanggal Invoice", invoice_data['TANGGAL INVOICE'].min())
-    
     # Lakukan rekonsiliasi jika tombol ditekan
     if st.button("Rekonsiliasi"):
-        result_table, total_invoice_per_day = reconcile(bank_data, invoice_data, selected_invoice_date, start_date, end_date)
+        result_table, total_invoice_per_day = reconcile(bank_data, invoice_data, start_date, end_date)
 
         # Tampilkan hasil rekonsiliasi
-        st.subheader(f"Rekonsiliasi untuk Tanggal Invoice {selected_invoice_date}")
+        st.subheader(f"Rekonsiliasi untuk Rentang Tanggal {start_date} - {end_date}")
         st.write(result_table)
 
         # Tampilkan total nominal invoice per hari
-        st.subheader(f"Total Nominal Invoice pada Tanggal {selected_invoice_date}")
+        st.subheader(f"Total Nominal Invoice pada Rentang Tanggal {start_date} - {end_date}")
         st.write(total_invoice_per_day)
 
         # Opsi untuk mengunduh hasil
