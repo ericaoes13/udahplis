@@ -32,7 +32,7 @@ def reconcile(bank_data, invoice_data, start_date, end_date):
     result_table['Invoice'] = total_invoice_per_day  # Menambahkan total invoice
 
     # Return hasil
-    return result_table, total_invoice_per_day
+    return result_table, total_invoice_per_day, invoice_data_filtered
 
 # Antarmuka Streamlit
 st.title("Aplikasi Rekonsiliasi Data Rekening Koran dan Invoice")
@@ -56,16 +56,20 @@ if uploaded_invoice_file and uploaded_bank_file:
     bank_data = load_data(uploaded_bank_file)
     invoice_data = load_data(uploaded_invoice_file)
     
+    # Pastikan kolom TANGGAL INVOICE diformat sebagai datetime
+    invoice_data['TANGGAL INVOICE'] = pd.to_datetime(invoice_data['TANGGAL INVOICE'], errors='coerce')
+
     # Tampilkan data mentah
     st.subheader("Data Rekening Koran")
     st.write(bank_data.head())
     
     st.subheader("Data Invoice")
-    st.write(invoice_data.head())
+    # Tampilkan hanya TANGGAL INVOICE dan HARGA
+    st.write(invoice_data[['TANGGAL INVOICE', 'HARGA']].head())
 
     # Lakukan rekonsiliasi jika tombol ditekan
     if st.button("Rekonsiliasi"):
-        result_table, total_invoice_per_day = reconcile(bank_data, invoice_data, start_date, end_date)
+        result_table, total_invoice_per_day, invoice_data_filtered = reconcile(bank_data, invoice_data, start_date, end_date)
 
         # Tampilkan hasil rekonsiliasi
         st.subheader(f"Rekonsiliasi untuk Rentang Tanggal {start_date} - {end_date}")
@@ -79,3 +83,4 @@ if uploaded_invoice_file and uploaded_bank_file:
         st.download_button("Unduh Hasil Rekonsiliasi", result_table.to_csv(index=False), "result.csv", "text/csv")
 else:
     st.warning("Silakan unggah file invoice dan rekening koran untuk memulai rekonsiliasi.")
+
