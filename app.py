@@ -83,12 +83,16 @@ if invoice_file and bank_statement_file:
         (bank_statement_data['Posting Date'] <= end_date_bank)
     ]
 
-    # Tampilkan data yang telah difilter
-    st.subheader("Data Invoice yang Difilter")
-    st.write(filtered_invoice_data)
+    # Gabungkan data Invoice dan Rekening Koran berdasarkan Tanggal
+    reconciled_data = pd.merge(filtered_bank_statement_data, filtered_invoice_data, 
+                               left_on='Posting Date', right_on='TANGGAL INVOICE', how='inner')
 
-    st.subheader("Data Rekening Koran yang Difilter")
-    st.write(filtered_bank_statement_data)
+    # Tampilkan hasil rekonsiliasi dalam format tabel yang lebih rapi
+    st.subheader("Contoh Hasil Rekonsiliasi:")
+    reconciled_data = reconciled_data[['Posting Date', 'Remark', 'Credit', 'TANGGAL INVOICE', 'HARGA']]
+    reconciled_data.columns = ['Posting Date', 'Remark', 'Credit', 'Invoice Date', 'Invoice']
+
+    st.write(reconciled_data)
 
 else:
     st.warning("Harap upload kedua file: Invoice dan Rekening Koran.")
