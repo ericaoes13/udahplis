@@ -63,6 +63,14 @@ if invoice_file and bank_statement_file:
     start_date_bank = st.date_input("Tanggal Mulai Rekening Koran", bank_statement_data['Posting Date'].min())
     end_date_bank = st.date_input("Tanggal Akhir Rekening Koran", bank_statement_data['Posting Date'].max())
 
+    # Pastikan start_date_invoice dan end_date_invoice adalah datetime
+    start_date_invoice = pd.to_datetime(start_date_invoice)
+    end_date_invoice = pd.to_datetime(end_date_invoice)
+
+    # Pastikan start_date_bank dan end_date_bank adalah datetime
+    start_date_bank = pd.to_datetime(start_date_bank)
+    end_date_bank = pd.to_datetime(end_date_bank)
+
     # Filter data berdasarkan tanggal untuk Invoice
     filtered_invoice_data = invoice_data[
         (invoice_data['TANGGAL INVOICE'] >= start_date_invoice) & 
