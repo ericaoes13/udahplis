@@ -87,15 +87,18 @@ if invoice_file and bank_statement_file:
     reconciled_data = pd.merge(filtered_bank_statement_data, filtered_invoice_data, 
                                left_on='Posting Date', right_on='TANGGAL INVOICE', how='inner')
 
+    # Tambahkan kolom tanggal invoice di paling kiri
+    reconciled_data.insert(0, 'Tanggal Invoice', reconciled_data['TANGGAL INVOICE'].dt.strftime('%d/%m/%y'))
+
+    # Tambahkan kolom hasil sum invoice di paling kanan
+    reconciled_data['Hasil Sum Invoice'] = reconciled_data['HARGA'].sum()
+
     # Tampilkan hasil rekonsiliasi dalam format tabel yang lebih rapi
     st.subheader("Contoh Hasil Rekonsiliasi:")
-    reconciled_data = reconciled_data[['Posting Date', 'Remark', 'Credit', 'TANGGAL INVOICE', 'HARGA']]
-    reconciled_data.columns = ['Posting Date', 'Remark', 'Credit', 'Invoice Date', 'Invoice']
+    reconciled_data = reconciled_data[['Tanggal Invoice', 'Posting Date', 'Remark', 'Credit', 'HARGA', 'Hasil Sum Invoice']]
+    reconciled_data.columns = ['Tanggal Invoice', 'Posting Date', 'Remark', 'Credit', 'Invoice', 'Hasil Sum Invoice']
 
-    # Tampilkan rentang tanggal invoice yang dipilih
-    invoice_date_range = f"Rentang Tanggal Invoice: {start_date_invoice.date()} hingga {end_date_invoice.date()}"
-    st.write(invoice_date_range)
-
+    # Tampilkan hasil rekonsiliasi
     st.write(reconciled_data)
 
 else:
