@@ -37,15 +37,13 @@ if invoice_file and bank_statement_file:
     invoice_data = pd.read_excel(invoice_path)
     bank_statement_data = pd.read_excel(bank_statement_path)
 
-    # Konversi kolom 'TANGGAL INVOICE' menjadi datetime
+    # Pastikan kolom 'TANGGAL INVOICE' dan 'Posting Date' adalah datetime
     invoice_data['TANGGAL INVOICE'] = pd.to_datetime(invoice_data['TANGGAL INVOICE'], errors='coerce')
-
-    # Konversi kolom 'Posting Date' menjadi datetime
     bank_statement_data['Posting Date'] = pd.to_datetime(bank_statement_data['Posting Date'], errors='coerce')
 
-    # Lakukan pengecekan jika ada nilai NaT (Not a Time) pada 'Posting Date'
-    if bank_statement_data['Posting Date'].isna().sum() > 0:
-        st.warning("Ada nilai yang tidak valid pada kolom 'Posting Date'. Beberapa data mungkin diabaikan.")
+    # Cek jika ada nilai NaT di kolom tanggal
+    if invoice_data['TANGGAL INVOICE'].isna().sum() > 0 or bank_statement_data['Posting Date'].isna().sum() > 0:
+        st.warning("Beberapa data tidak valid pada kolom tanggal. Periksa format tanggal.")
 
     # Tampilkan data Invoice dan Rekening Koran
     st.subheader("Data Invoice")
@@ -59,18 +57,6 @@ if invoice_file and bank_statement_file:
     start_date_invoice = st.date_input("Tanggal Mulai Invoice", pd.to_datetime(invoice_data['TANGGAL INVOICE'].min()))
     end_date_invoice = st.date_input("Tanggal Akhir Invoice", pd.to_datetime(invoice_data['TANGGAL INVOICE'].max()))
 
-    # Fitur Filter Tanggal untuk Rekening Koran
-    start_date_bank = st.date_input("Tanggal Mulai Rekening Koran", bank_statement_data['Posting Date'].min())
-    end_date_bank = st.date_input("Tanggal Akhir Rekening Koran", bank_statement_data['Posting Date'].max())
-
-    # Pastikan start_date_invoice dan end_date_invoice adalah datetime
-    start_date_invoice = pd.to_datetime(start_date_invoice)
-    end_date_invoice = pd.to_datetime(end_date_invoice)
-
-    # Pastikan start_date_bank dan end_date_bank adalah datetime
-    start_date_bank = pd.to_datetime(start_date_bank)
-    end_date_bank = pd.to_datetime(end_date_bank)
-
     # Filter data berdasarkan tanggal untuk Invoice
     filtered_invoice_data = invoice_data[
         (invoice_data['TANGGAL INVOICE'] >= start_date_invoice) & 
@@ -79,8 +65,8 @@ if invoice_file and bank_statement_file:
 
     # Filter data berdasarkan tanggal untuk Rekening Koran
     filtered_bank_statement_data = bank_statement_data[
-        (bank_statement_data['Posting Date'] >= start_date_bank) & 
-        (bank_statement_data['Posting Date'] <= end_date_bank)
+        (bank_statement_data['Posting Date'] >= start_date_invoice) & 
+        (bank_statement_data['Posting Date'] <= end_date_invoice)
     ]
 
     # Gabungkan data Invoice dan Rekening Koran berdasarkan Tanggal
@@ -91,23 +77,17 @@ if invoice_file and bank_statement_file:
     reconciled_data.insert(0, 'Tanggal Invoice', reconciled_data['TANGGAL INVOICE'].dt.strftime('%d/%m/%y'))
 
     # Menambahkan kolom hasil sum invoice di paling kanan
-    reconciled_data['Hasil Sum Invoice'] = reconciled_data.groupby('Posting Date')['HARGA'].transform('sum')
+    reconciled_data['Hasil Sum Invoice'] = reconciled_data.groupby('Tanggal Invoice')['HARGA'].transform('sum')
 
     # Menampilkan hasil rekonsiliasi dengan hanya satu tanggal per baris
     reconciled_data = reconciled_data[['Tanggal Invoice', 'Posting Date', 'Remark', 'Credit', 'HARGA', 'Hasil Sum Invoice']]
 
-    # Menampilkan hasil rekonsiliasi sesuai permintaan
+    # Menghilangkan duplikasi berdasarkan Posting Date
     reconciled_data = reconciled_data.drop_duplicates(subset=['Posting Date'])
 
     reconciled_data.columns = ['Tanggal Invoice', 'Posting Date', 'Remark', 'Credit', 'Invoice', 'Hasil Sum Invoice']
 
     st.subheader("Contoh Hasil Rekonsiliasi:")
-    st.write(reconciled_data)
-
-else:
-    st.warning("Harap upload kedua file: Invoice dan Rekening Koran.")
-
-    # Tampilkan hasil rekonsiliasi
     st.write(reconciled_data)
 
 else:
