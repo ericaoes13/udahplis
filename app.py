@@ -57,6 +57,10 @@ if invoice_file and bank_statement_file:
     start_date_invoice = st.date_input("Tanggal Mulai Invoice", pd.to_datetime(invoice_data['TANGGAL INVOICE'].min()))
     end_date_invoice = st.date_input("Tanggal Akhir Invoice", pd.to_datetime(invoice_data['TANGGAL INVOICE'].max()))
 
+    # Pastikan start_date_invoice dan end_date_invoice adalah datetime
+    start_date_invoice = pd.to_datetime(start_date_invoice)
+    end_date_invoice = pd.to_datetime(end_date_invoice)
+
     # Filter data berdasarkan tanggal untuk Invoice
     filtered_invoice_data = invoice_data[
         (invoice_data['TANGGAL INVOICE'] >= start_date_invoice) & 
