@@ -87,16 +87,25 @@ if invoice_file and bank_statement_file:
     reconciled_data = pd.merge(filtered_bank_statement_data, filtered_invoice_data, 
                                left_on='Posting Date', right_on='TANGGAL INVOICE', how='inner')
 
-    # Tambahkan kolom tanggal invoice di paling kiri
+    # Menambahkan kolom tanggal invoice di paling kiri
     reconciled_data.insert(0, 'Tanggal Invoice', reconciled_data['TANGGAL INVOICE'].dt.strftime('%d/%m/%y'))
 
-    # Tambahkan kolom hasil sum invoice di paling kanan
-    reconciled_data['Hasil Sum Invoice'] = reconciled_data['HARGA'].sum()
+    # Menambahkan kolom hasil sum invoice di paling kanan
+    reconciled_data['Hasil Sum Invoice'] = reconciled_data.groupby('Posting Date')['HARGA'].transform('sum')
 
-    # Tampilkan hasil rekonsiliasi dalam format tabel yang lebih rapi
-    st.subheader("Contoh Hasil Rekonsiliasi:")
+    # Menampilkan hasil rekonsiliasi dengan hanya satu tanggal per baris
     reconciled_data = reconciled_data[['Tanggal Invoice', 'Posting Date', 'Remark', 'Credit', 'HARGA', 'Hasil Sum Invoice']]
+
+    # Menampilkan hasil rekonsiliasi sesuai permintaan
+    reconciled_data = reconciled_data.drop_duplicates(subset=['Posting Date'])
+
     reconciled_data.columns = ['Tanggal Invoice', 'Posting Date', 'Remark', 'Credit', 'Invoice', 'Hasil Sum Invoice']
+
+    st.subheader("Contoh Hasil Rekonsiliasi:")
+    st.write(reconciled_data)
+
+else:
+    st.warning("Harap upload kedua file: Invoice dan Rekening Koran.")
 
     # Tampilkan hasil rekonsiliasi
     st.write(reconciled_data)
