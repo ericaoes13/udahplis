@@ -40,48 +40,6 @@ if invoice_file and bank_statement_file:
     # Pastikan kolom 'TANGGAL INVOICE' dan 'Posting Date' adalah datetime
     invoice_data['TANGGAL INVOICE'] = pd.to_datetime(invoice_data['TANGGAL INVOICE'], errors='coerce')
     bank_statement_data['Posting Date'] = pd.to_datetime(bank_statement_data['Posting Date'], errors='coerce')
-import streamlit as st
-import pandas as pd
-import os
-
-# Folder untuk menyimpan file yang diupload
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Judul Aplikasi
-st.title('Web Rekonsiliasi Invoice dan Rekening Koran')
-
-# Fungsi untuk meng-upload file
-def upload_file(file_type):
-    st.subheader(f"Upload File {file_type}")
-    uploaded_file = st.file_uploader(f"Choose a {file_type} file", type=["xlsx"])
-    return uploaded_file
-
-# Upload file Invoice
-invoice_file = upload_file("Invoice")
-
-# Upload file Rekening Koran
-bank_statement_file = upload_file("Rekening Koran")
-
-# Jika kedua file sudah di-upload
-if invoice_file and bank_statement_file:
-    # Simpan file ke folder uploads
-    invoice_path = os.path.join(UPLOAD_FOLDER, invoice_file.name)
-    bank_statement_path = os.path.join(UPLOAD_FOLDER, bank_statement_file.name)
-
-    with open(invoice_path, "wb") as f:
-        f.write(invoice_file.getbuffer())
-
-    with open(bank_statement_path, "wb") as f:
-        f.write(bank_statement_file.getbuffer())
-
-    # Baca data dari file Excel
-    invoice_data = pd.read_excel(invoice_path)
-    bank_statement_data = pd.read_excel(bank_statement_path)
-
-    # Pastikan kolom 'TANGGAL INVOICE' dan 'Posting Date' adalah datetime
-    invoice_data['TANGGAL INVOICE'] = pd.to_datetime(invoice_data['TANGGAL INVOICE'], errors='coerce')
-    bank_statement_data['Posting Date'] = pd.to_datetime(bank_statement_data['Posting Date'], errors='coerce')
 
     # Cek jika ada nilai NaT di kolom tanggal
     if invoice_data['TANGGAL INVOICE'].isna().sum() > 0 or bank_statement_data['Posting Date'].isna().sum() > 0:
